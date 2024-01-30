@@ -19,6 +19,8 @@ class MainWindow(QMainWindow, form_class):
         self.joinreset_btn.clicked.connect(self.joinReset)  # 회원가입탭에서 초기화 클릭시 모든 입력사항 삭제
         self.idcheck_btn.clicked.connect(self.idCheck)
         # 현재 아이디 입력창에 입력된 아이디를 가져와 db에 존재하는지 여부 체크
+        self.login_btn.clicked.connect(self.memberLogin)  # 로그인 버튼이 클릭되면 로그인 성공여부 확인
+        self.loginreset_btn.clicked.connect(self.loginReset)  # 로그인탭에서 초기화 클릭시 모든 입력사항 삭제
 
     def memberJoin(self):  # 회원 가입 함수
         memberid = self.joinid_edit.text()  # 유저가 입력한 회원아이디 텍스트 가져오기
@@ -67,6 +69,31 @@ class MainWindow(QMainWindow, form_class):
 
         cur.close()
         dbConn.close()
+
+    def memberLogin(self):
+        memberid = self.loginid_edit.text()
+        memberpw = self.loginpw_edit.text()
+        dbConn = pymysql.connect(host='localhost', user='root', password='12345', db='pydb')
+        sql = f"SELECT * FROM appmember WHERE memberid='{memberid}' AND memberpw='{memberpw}'"
+
+        cur = dbConn.cursor()
+        cur.execute(sql)
+
+        result = cur.fetchone()
+        print(result)
+
+        if result != None:  # 참이면 현재 조회하려는 아이디가 DB에 이미 존재함
+            QMessageBox.warning(self, "로그인 성공!", f"{result[2]}님 환영합니다. 로그인 하셨습니다.")
+            self.loginReset()
+        else:
+            QMessageBox.warning(self, "로그인 실패", "아이디 또는 비밀번호가 틀립니다. 다시 확인후 로그인하세요.")
+
+        cur.close()
+        dbConn.close()
+
+    def loginReset(self):
+        self.loginid_edit.clear()  # loginid_edit 입력된 텍스트를 삭제
+        self.loginpw_edit.clear()  # loginpw_edit 입력된 텍스트를 삭제
 
 
 app = QApplication(sys.argv)
