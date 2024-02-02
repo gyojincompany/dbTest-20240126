@@ -32,27 +32,37 @@ class MainWindow(QMainWindow, form_class):
 
     def memberJoin(self):  # 회원 가입 함수
 
-        memberid = self.joinid_edit.text()  # 유저가 입력한 회원아이디 텍스트 가져오기
-        memberpw = self.joinpw_edit.text()
-        membername = self.joinname_edit.text()
-        memberemail = self.joinemail_edit.text()
-        memberage = self.joinage_edit.text()
+        self.idCheck()  
+        # 아이디를 체크하여 이미 db에 존재하는 아이디면 경고창을 출력하고 idFlag값을 1로 변경함
 
-        dbConn = pymysql.connect(host='localhost', user='root', password='12345', db='pydb')
-        sql = f"INSERT INTO appmember VALUES ('{memberid}','{memberpw}','{membername}','{memberemail}',{memberage})"
+        if self.idFlag != 1: 
+            memberid = self.joinid_edit.text()  # 유저가 입력한 회원아이디 텍스트 가져오기
+            memberpw = self.joinpw_edit.text()
+            membername = self.joinname_edit.text()
+            memberemail = self.joinemail_edit.text()
+            memberage = self.joinage_edit.text()
+
+            if memberage.isdecimal():  # 나이가 정수인지 아닌지 판별
+                dbConn = pymysql.connect(host='localhost', user='root', password='12345', db='pydb')
+                sql = f"INSERT INTO appmember VALUES ('{memberid}','{memberpw}','{membername}','{memberemail}',{memberage})"
+
+                cur = dbConn.cursor()
+                result = cur.execute(sql)  # 데이터 삽입이 성공하면 1이 반환
+
+                if (result == 1):
+                    QMessageBox.warning(self, "가입성공!", "회원 가입이 성공하였습니다.")
+                    self.joinReset()  # 회원 가입 성공 후에 입려된 값 초기화
+                else:
+                    QMessageBox.warning(self, "가입실패!", "회원 가입이 실패하였습니다.\n다시 가입해주세요.")
+
+                cur.close()
+                dbConn.commit()  # insert, update, delete 실행시는 반드시 commit
+                dbConn.close()
+            else:
+                QMessageBox.warning(self, '나이 오류!', '나이는 정수만 입력가능합니다.')
         
-        cur = dbConn.cursor()
-        result = cur.execute(sql)  # 데이터 삽입이 성공하면 1이 반환
-
-        if(result == 1):
-            QMessageBox.warning(self, "가입성공!","회원 가입이 성공하였습니다.")
-            self.joinReset()  # 회원 가입 성공 후에 입려된 값 초기화
         else:
-            QMessageBox.warning(self, "가입실패!", "회원 가입이 실패하였습니다.\n다시 가입해주세요.")
-
-        cur.close()
-        dbConn.commit()  # insert, update, delete 실행시는 반드시 commit
-        dbConn.close()
+            pass  # 아무동작도 하지 않음
 
     def joinReset(self):
         self.joinid_edit.clear()  # joinid_edit 입력된 텍스트를 삭제
@@ -61,7 +71,7 @@ class MainWindow(QMainWindow, form_class):
         self.joinemail_edit.clear()
         self.joinage_edit.clear()
 
-    def idCheck(self):
+    def idCheck(self):  # 기존에 가입된 아이디의 존재여부 확인 함수
         memberid = self.joinid_edit.text()
         dbConn = pymysql.connect(host='localhost', user='root', password='12345', db='pydb')
         sql = f"SELECT * FROM appmember WHERE memberid='{memberid}'"
@@ -71,8 +81,11 @@ class MainWindow(QMainWindow, form_class):
 
         result = cur.fetchone()
 
+        self.idFlag = 0  # 전역변수 선언
+
         if result != None:  # 참이면 현재 조회하려는 아이디가 DB에 이미 존재함
             QMessageBox.warning(self, "회원 가입 불가", "입력하신 아이디는 이미 존재하는 아이디입니다.\n다른 아이디를 입력하세요.")
+            self.idFlag = 1
         else:
             QMessageBox.warning(self, "회원 가입 가능", "입력하신 아이디는 가입가능한 아이디입니다.\n계속해서 가입 진행하세요.")
 
