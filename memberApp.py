@@ -22,7 +22,14 @@ class MainWindow(QMainWindow, form_class):
         self.login_btn.clicked.connect(self.memberLogin)  # 로그인 버튼이 클릭되면 로그인 성공여부 확인
         self.loginreset_btn.clicked.connect(self.loginReset)  # 로그인탭에서 초기화 클릭시 모든 입력사항 삭제
 
+        # 회원 조회 버튼 클릭시 memberSearch 함수 호출
+        self.membersearch_btn.clicked.connect(self.memberSearch)
+        # 회원 조회 화면 초기화 버튼 클릭시 searchReset 함수 호출
+        self.memberreset_btn.clicked.connect(self.searchReset)
+
+
     def memberJoin(self):  # 회원 가입 함수
+
         memberid = self.joinid_edit.text()  # 유저가 입력한 회원아이디 텍스트 가져오기
         memberpw = self.joinpw_edit.text()
         membername = self.joinname_edit.text()
@@ -39,7 +46,7 @@ class MainWindow(QMainWindow, form_class):
             QMessageBox.warning(self, "가입성공!","회원 가입이 성공하였습니다.")
             self.joinReset()  # 회원 가입 성공 후에 입려된 값 초기화
         else:
-            QMessageBox.warning(self, "가입실패!", "회원 가입이 실패하였습니다. 다시 가입해주세요.")
+            QMessageBox.warning(self, "가입실패!", "회원 가입이 실패하였습니다.\n다시 가입해주세요.")
 
         cur.close()
         dbConn.commit()  # insert, update, delete 실행시는 반드시 commit
@@ -63,9 +70,9 @@ class MainWindow(QMainWindow, form_class):
         result = cur.fetchone()
 
         if result != None:  # 참이면 현재 조회하려는 아이디가 DB에 이미 존재함
-            QMessageBox.warning(self, "회원 가입 불가", "입력하신 아이디는 이미 존재하는 아이디입니다. 다른 아이디를 입력하세요.")
+            QMessageBox.warning(self, "회원 가입 불가", "입력하신 아이디는 이미 존재하는 아이디입니다.\n다른 아이디를 입력하세요.")
         else:
-            QMessageBox.warning(self, "회원 가입 가능", "입력하신 아이디는 가입가능한 아이디입니다. 계속해서 가입 진행하세요.")
+            QMessageBox.warning(self, "회원 가입 가능", "입력하신 아이디는 가입가능한 아이디입니다.\n계속해서 가입 진행하세요.")
 
         cur.close()
         dbConn.close()
@@ -83,10 +90,10 @@ class MainWindow(QMainWindow, form_class):
         print(result)
 
         if result != None:  # 참이면 현재 조회하려는 아이디가 DB에 이미 존재함
-            QMessageBox.warning(self, "로그인 성공!", f"{result[2]}님 환영합니다. 로그인 하셨습니다.")
+            QMessageBox.warning(self, "로그인 성공!", f"{result[2]}님 환영합니다.\n로그인 하셨습니다.")
             self.loginReset()
         else:
-            QMessageBox.warning(self, "로그인 실패", "아이디 또는 비밀번호가 틀립니다. 다시 확인후 로그인하세요.")
+            QMessageBox.warning(self, "로그인 실패", "아이디 또는 비밀번호가 틀립니다.\n다시 확인후 로그인하세요.")
 
         cur.close()
         dbConn.close()
@@ -94,6 +101,40 @@ class MainWindow(QMainWindow, form_class):
     def loginReset(self):
         self.loginid_edit.clear()  # loginid_edit 입력된 텍스트를 삭제
         self.loginpw_edit.clear()  # loginpw_edit 입력된 텍스트를 삭제
+
+    def memberSearch(self):  # 회원 조회 함수
+        memberid = self.memberid_edit.text()  # 유저가 조회하기 위해 입력한 아이디 가져오기
+
+        dbConn = pymysql.connect(host='localhost', user='root', password='12345', db='pydb')
+        sql = f"SELECT * FROM appmember WHERE memberid='{memberid}'"
+
+        cur = dbConn.cursor()
+        cur.execute(sql)
+
+        result = cur.fetchone()
+
+        cur.close()
+        dbConn.close()
+
+        print(result)  # result는 튜플구조로 인덱스를 사용하여 참조 가능
+
+        if result != None:  # 회원 가입 여부 확인->조건이 참이면 등록된 회원임
+            self.memberpw_edit.setText(result[1])
+            self.membername_edit.setText(result[2])
+            self.memberemail_edit.setText(result[3])
+            self.memberage_edit.setText(str(result[4]))
+        else:
+            QMessageBox.warning(self, '아이디 오류', '조회하신 아이디는 없는 아이디입니다.\n다시확인해 주세요.')
+
+    def searchReset(self):  # 회원조회 화면에서 모든 항목을 초기화
+        self.memberid_edit.clear()
+        self.memberpw_edit.clear()
+        self.membername_edit.clear()
+        self.memberemail_edit.clear()
+        self.memberage_edit.clear()
+
+
+
 
 
 app = QApplication(sys.argv)
