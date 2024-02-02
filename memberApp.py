@@ -26,6 +26,8 @@ class MainWindow(QMainWindow, form_class):
         self.membersearch_btn.clicked.connect(self.memberSearch)
         # 회원 조회 화면 초기화 버튼 클릭시 searchReset 함수 호출
         self.memberreset_btn.clicked.connect(self.searchReset)
+        # 회원 조회 화면 정보수정 버튼 클릭시 memberModify 함수 호출
+        self.membermodify_btn.clicked.connect(self.memberModify)
 
 
     def memberJoin(self):  # 회원 가입 함수
@@ -87,7 +89,7 @@ class MainWindow(QMainWindow, form_class):
         cur.execute(sql)
 
         result = cur.fetchone()
-        print(result)
+        # print(result)
 
         if result != None:  # 참이면 현재 조회하려는 아이디가 DB에 이미 존재함
             QMessageBox.warning(self, "로그인 성공!", f"{result[2]}님 환영합니다.\n로그인 하셨습니다.")
@@ -133,8 +135,30 @@ class MainWindow(QMainWindow, form_class):
         self.memberemail_edit.clear()
         self.memberage_edit.clear()
 
+    def memberModify(self):  # 회원정보 수정 함수
+        
+        # 현재 입력되어 있는 회원정보를 모두 가져오기
+        memberid = self.memberid_edit.text()
+        memberpw = self.memberpw_edit.text()
+        membername = self.membername_edit.text()
+        memberemail = self.memberemail_edit.text()
+        memberage = self.memberage_edit.text()
+
+        dbConn = pymysql.connect(host='localhost', user='root', password='12345', db='pydb')
+        sql = f"UPDATE appmember SET memberpw='{memberpw}', membername='{membername}', memberemail='{memberemail}', memberage='{memberage}' WHERE memberid='{memberid}'"
+
+        cur = dbConn.cursor()
+        result = cur.execute(sql)  # 성공시 1이 반환
+
+        if result == 1:  # 회원정보 수정  성공
+            QMessageBox.warning(self, '회원정보수정 성공', '입력하신 정보로 회원정보가 수정되었습니다.')
+        else:  # 회원정보 수정 실패
+            QMessageBox.warning(self, '회원정보수정 실패', '입력하신 정보로 회원정보가 수정이 실패하였습니다.')
 
 
+        cur.close()
+        dbConn.commit()  # insert, delete, update 문은 꼭 실행후 commit 해줘야 함!!!
+        dbConn.close()
 
 
 app = QApplication(sys.argv)
